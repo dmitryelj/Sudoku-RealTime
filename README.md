@@ -9,3 +9,7 @@ Solving the sudoku board in real-time from a static image or from a camera strea
 - _python3 sudoku.py_  - run a video stream
 
 ![Screenshot](result_example.png)
+
+#### Preparation
+
+Compiling the solver_lib library is required, see compile.sh/compile.bat for details.
