@@ -14,9 +14,8 @@ import imageio
 import time
 import numpy as np
 import pytesseract
-import solver
 import random
-import copy
+import ctypes
 import sys
 import glob
 import logging
@@ -33,6 +32,9 @@ ESC_KEY = 27
 
 # Images size for OCR
 IMG_SIZE = 32
+
+# C-library binding
+solver_lib = None
 
 
 # Neural network model
@@ -227,6 +229,22 @@ def predict_pytorch(model: Model, images: List):
         return pred.tolist()
 
 
+def solve_board(board: List):
+    global solver_lib
+    if solver_lib is None:
+        solver_lib = ctypes.CDLL('solver_lib_%s.so' % sys.platform)
+        solver_lib.solve.argtypes = [ctypes.POINTER(ctypes.c_int)]
+
+    board_data = (ctypes.c_int * len(board))(*board)
+    # C-wrapper for solving the Sudoku board
+    # Input data: List of 9x9=81 cells
+    res = solver_lib.solve(board_data)
+    if res:
+        board[:] = list(board_data)
+    return res
+
+
+
 def process_image(model: Model, img: Any, show_preview=True):
     w, h = img.shape[1], img.shape[0]
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -337,7 +355,7 @@ def process_image(model: Model, img: Any, show_preview=True):
         # Solve the board and draw digits on the board
         t_start = time.monotonic()
         board_orig = list(board)
-        res = solver.solve_c(board)
+        res = solve_board(board)
         # print("dT2:", time.monotonic() - t_start)
         if res:
             result_found = True

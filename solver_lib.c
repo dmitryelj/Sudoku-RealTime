@@ -1,5 +1,6 @@
 /*
  Sudoku C-solver
+ Original idea: https://github.com/techwithtim/Sudoku-GUI-Solver
 
  Compile:
  Linux: gcc -shared -Wl,-soname,solver_lib -o solver_lib.so -fPIC solver_lib.c
@@ -28,6 +29,37 @@
 #else
 #define DLL_EXPORT
 #endif
+
+int find_duplicates(int *bo) {
+    // If any row or column has duplicated digits, then no solution is available
+    for(int line=0; line<9; line++) {
+        for(int i=0; i<8; i++) {
+            for(int j=i+1; j<9; j++) {
+                // Check horizontal line
+                if (bo[9*line + i] != 0 && bo[9*line + i] == bo[9*line + j])
+                    return 1;
+                // Check vertical line
+                if (bo[9*i + line] != 0 && bo[9*i + line] == bo[9*j + line])
+                    return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int find_empty_cells(int *bo) {
+    // If any 3x3 cell of the board is empty, the board is not valid
+    for(int cx=0; cx<9; cx+=3) {
+        for(int cy=0; cy<9; cy+=3) {
+            if (bo[9*cy + cx] == bo[9*cy + cx + 1] && bo[9*cy + cx + 1] == bo[9*cy + cx + 2] && bo[9*cy + cx + 2] == bo[9*(cy + 1) + cx] &&
+                bo[9*(cy + 1) + cx] == bo[9*(cy + 1) + cx + 1] && bo[9*(cy + 1) + cx + 1] == bo[9*(cy + 1) + cx + 2] &&
+                bo[9*(cy + 1) + cx + 2] == bo[9*(cy + 2) + cx] && bo[9*(cy + 2) + cx] == bo[9*(cy + 2) + cx + 1] &&
+                bo[9*(cy + 2) + cx + 1] == bo[9*(cy + 2) + cx + 2] && bo[9*(cy + 2) + cx + 2] == 0)
+                 return 1;
+        }
+    }
+    return 0;
+}
 
 int find_empty(int *bo, int *pos_i, int *pos_j) {
     // Finds an empty space in the board
@@ -67,37 +99,6 @@ int valid(int *bo, int pos0, int pos1, int num) {
     return 1;
 }
 
-int find_duplicates(int *bo) {
-    // If any row or column has duplicated digits, then no solution is available
-    for(int line=0; line<9; line++) {
-        for(int i=0; i<8; i++) {
-            for(int j=i+1; j<9; j++) {
-                // Check horizontal line
-                if (bo[9*line + i] != 0 && bo[9*line + i] == bo[9*line + j])
-                    return 1;
-                // Check vertical line
-                if (bo[9*i + line] != 0 && bo[9*i + line] == bo[9*j + line])
-                    return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-int find_empty_cells(int *bo) {
-    // If any 3x3 cell of the board is empty, the board is not valid
-    for(int cx=0; cx<9; cx+=3) {
-        for(int cy=0; cy<9; cy+=3) {
-            if (bo[9*cy + cx] == bo[9*cy + cx + 1] && bo[9*cy + cx + 1] == bo[9*cy + cx + 2] && bo[9*cy + cx + 2] == bo[9*(cy + 1) + cx] &&
-                bo[9*(cy + 1) + cx] == bo[9*(cy + 1) + cx + 1] && bo[9*(cy + 1) + cx + 1] == bo[9*(cy + 1) + cx + 2] &&
-                bo[9*(cy + 1) + cx + 2] == bo[9*(cy + 2) + cx] && bo[9*(cy + 2) + cx] == bo[9*(cy + 2) + cx + 1] &&
-                bo[9*(cy + 2) + cx + 1] == bo[9*(cy + 2) + cx + 2] && bo[9*(cy + 2) + cx + 2] == 0)
-                 return 1;
-        }
-    }
-    return 0;
-}
-
 int solve_(int *bo) {
     // Solves a sudoku board using backtracking
     int row, col;
@@ -132,6 +133,8 @@ DLL_EXPORT int solve(int *bo) {
 }
 
 
+/*
+// For testing only:
 int main(int argc, char *argv[])
 {
     // Code test:
@@ -184,4 +187,4 @@ int main(int argc, char *argv[])
         print_board(bo);
 
     return 0;
-}
+}*/
